@@ -1,0 +1,20 @@
+{
+  "server": {
+    "port": 8080
+  },
+  "jwt": {
+    "secret": "your-strong-jwt-secret"
+  },
+  "smtp": {
+    "server": "smtp.example.com",
+    "port": 587,
+    "username": "your_email@example.com",
+    "password": "your_email_password"
+  },
+  "log": {
+    "level": "info",
+    "file_path": "logs/account_system.log",
+    "max_size": 10485760,
+    "max_files": 5
+  }
+}
