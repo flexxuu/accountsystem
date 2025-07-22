@@ -13,8 +13,9 @@
 
 // HTTP客户端接口
 class HttpClient {
-public:
-    virtual ~HttpClient() = default;
+  public:
+      static std::unique_ptr<HttpClient> create();
+      virtual ~HttpClient() = default;
 
     // 发送GET请求
     virtual std::string get(const std::string& url, const std::map<std::string, std::string>& headers = {}) = 0;
@@ -27,9 +28,10 @@ public:
 
     // 启用/禁用SSL验证
     virtual void setSSLVerification(bool enable) = 0;
+
+private:
+    HttpClient() = default;
+    HttpClient(const HttpClient&) = delete;
+    HttpClient& operator=(const HttpClient&) = delete;
 };
-
-// 创建HTTP客户端实例
-std::unique_ptr<HttpClient> createHttpClient();
-
 #endif // HTTP_CLIENT_H

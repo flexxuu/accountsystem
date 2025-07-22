@@ -2,19 +2,21 @@
 #define OAUTH2_SERVICE_IMPL_H
 
 #include "oauth2_service.h"
+#include <Poco/JSON/Parser.h>
+#include <mutex>
 #include <memory>
 #include <map>
 #include <string>
 #include "account_service.h"
 #include "util/http_client.h"
-#include "util/json.h"
 #include "util/security_utils.h"
+#include <nlohmann/json.hpp>
 
 class OAuth2ServiceImpl : public OAuth2Service {
 public:
     OAuth2ServiceImpl(std::shared_ptr<AccountService> accountService,
                      std::shared_ptr<HttpClient> httpClient,
-                     std::shared_ptr<JsonParser> jsonParser);
+                     std::shared_ptr<Poco::JSON::Parser> jsonParser);
 
     // 初始化第三方平台配置
     void initialize(const std::map<OAuth2Provider, OAuth2Config>& configs) override;
@@ -49,7 +51,7 @@ private:
 
     std::shared_ptr<AccountService> accountService_;
     std::shared_ptr<HttpClient> httpClient_;
-    std::shared_ptr<JsonParser> jsonParser_;
+    std::shared_ptr<Poco::JSON::Parser> jsonParser_;
     std::map<OAuth2Provider, OAuth2Config> providerConfigs_;
     std::map<std::string, std::chrono::system_clock::time_point> stateStore_;
     std::mutex stateMutex_;

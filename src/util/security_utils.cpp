@@ -1,8 +1,10 @@
 #include "security_utils.h"
 #include "config_utils.h"
-#include <openssl/sha.h>
-#include <openssl/hmac.h>
-#include <openssl/rand.h>
+#include <Poco/Crypto/SHA256Engine.h>
+#include <Poco/Crypto/HMACEngine.h>
+#include <Poco/Crypto/Random.h>
+#include <Poco/DigestStream.h>
+#include <Poco/StreamCopier.h>
 #include <sstream>
 #include <iomanip>
 #include <chrono>
@@ -14,7 +16,7 @@ namespace security {
 // 生成随机盐值
 std::string generateSalt(size_t length) {
     std::vector<unsigned char> salt(length);
-    if (RAND_bytes(salt.data(), salt.size()) != 1) {
+    Poco::Crypto::Random::bytes(salt.data(), salt.size());
         Log::error("生成随机盐值失败");
         throw std::runtime_error("Failed to generate salt");
     }
@@ -29,12 +31,13 @@ std::string generateSalt(size_t length) {
 // 使用SHA256和盐值哈希密码
 std::string hashPasswordWithSalt(const std::string& password, const std::string& salt) {
     std::string saltedPassword = password + salt;
-    unsigned char hash[SHA256_DIGEST_LENGTH];
-    SHA256(reinterpret_cast<const unsigned char*>(saltedPassword.c_str()), saltedPassword.size(), hash);
+    Poco::Crypto::SHA256Engine sha256;
+    sha256.update(saltedPassword);
+    const auto& digest = sha256.digest();
     
     std::stringstream ss;
-    for (int i = 0; i < SHA256_DIGEST_LENGTH; ++i) {
-        ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(hash[i]);
+    for (unsigned char c : digest) {
+        ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(c);
     }
     return ss.str();
 }
@@ -65,16 +68,33 @@ std::string generateSecureRandomString(size_t length) {
 
 // HMAC-SHA256签名
 std::string hmacSha256(const std::string& key, const std::string& data) {
-    unsigned char* digest;
-    digest = HMAC(EVP_sha256(), key.c_str(), key.size(), 
-                 reinterpret_cast<const unsigned char*>(data.c_str()), data.size(), nullptr, nullptr);
+    Poco::Crypto::HMACEngine hmac(Poco::Crypto::DigestEngine::ALG_SHA256, key.data(), key.size());
+    hmac.update(data);
+    const auto& digest = hmac.digest();
     
     std::stringstream ss;
-    for (int i = 0; i < SHA256_DIGEST_LENGTH; ++i) {
-        ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(digest[i]);
+    for (unsigned char c : digest) {
+        ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(c);
     }
-    OPENSSL_free(digest);
     return ss.str();
+}
+
+// 生成JWT访问令牌
+std::string generateJwtToken(const std::string& accountId) {
+    auto now = std::chrono::system_clock::now();
+    auto exp = now + std::chrono::hours(ConfigUtils::getJWTConfig().expires_hours);
+
+    jwt::jwt_object obj{jwt::params{
+        .algorithm = "HS256",
+        .secret = ConfigUtils::getJWTConfig().secret_key,
+        .payload_claims = {
+            {"sub", accountId},
+            {"iat", std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count()},
+            {"exp", std::chrono::duration_cast<std::chrono::seconds>(exp.time_since_epoch()).count()},
+            {"jti", generateSecureRandomString(16)}
+        }
+    }};
+    return obj.signature();
 }
 
 // 生成JWT刷新令牌

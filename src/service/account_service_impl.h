@@ -27,6 +27,8 @@ public:
     // 账号信息
     std::shared_ptr<Account> getAccountById(const std::string& id) override;
     std::shared_ptr<Account> getAccountByUsername(const std::string& username) override;
+    std::shared_ptr<Account> getAccountByEmail(const std::string& email) override;
+
     
     // 账号更新
     bool updateAccount(const std::string& accountId, const std::string& newUsername, 
@@ -36,7 +38,9 @@ public:
     
     // 账号删除
     bool deleteAccount(const std::string& accountId) override;
-    
+    void sendPasswordResetEmail(const std::string& email);
+    bool resetPassword(const std::string& email, const std::string& code, const std::string& newPassword);
+
 private:
     std::shared_ptr<AccountRepository> repository;
     std::shared_ptr<EmailService> emailService;
@@ -52,4 +56,4 @@ private:
     std::string generateJwtToken(const std::string& accountId);
 };
 
-#endif // ACCOUNT_SERVICE_IMPL_H    
+#endif // ACCOUNT_SERVICE_IMPL_H

@@ -38,35 +38,40 @@ private:
     bool running;
     
     // HTTP请求处理
-    static void handleHttpEvent(struct mg_connection *c, int ev, void *ev_data, void *fn_data);
-    
     // 路由处理
-    static void handleRegister(struct mg_connection *c, struct mg_http_message *hm, 
+    static void handleRegister(Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPServerResponse& res, 
                               std::shared_ptr<AccountService> service);
-    static void handleVerifyEmail(struct mg_connection *c, struct mg_http_message *hm, 
+    void handleVerifyEmail(Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPServerResponse& res, 
                                  std::shared_ptr<AccountService> service);
-    static void handleLogin(struct mg_connection *c, struct mg_http_message *hm, 
+    void handleLogin(Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPServerResponse& res, 
                            std::shared_ptr<AccountService> service);
-    static void handleGetAccount(struct mg_connection *c, struct mg_http_message *hm, 
+    void handleGetAccount(Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPServerResponse& res, 
                                 std::shared_ptr<AccountService> service);
-    static void handleUpdateAccount(struct mg_connection *c, struct mg_http_message *hm, 
+    void handleUpdateAccount(Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPServerResponse& res, 
                                    std::shared_ptr<AccountService> service);
-    static void handleChangePassword(struct mg_connection *c, struct mg_http_message *hm, 
+    void handleChangePassword(Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPServerResponse& res, 
                                     std::shared_ptr<AccountService> service);
-    static void handleDeleteAccount(struct mg_connection *c, struct mg_http_message *hm, 
+    void handleDeleteAccount(Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPServerResponse& res, 
                                    std::shared_ptr<AccountService> service);
     
     // OAuth2处理方法
-    static void handleOAuth2Authorize(struct mg_connection *c, struct mg_http_message *hm, 
+    void handleOAuth2Authorize(Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPServerResponse& res, 
                                      std::shared_ptr<OAuth2Service> oauth2Service);
-    static void handleOAuth2Callback(struct mg_connection *c, struct mg_http_message *hm, 
+    void handleOAuth2Callback(Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPServerResponse& res, 
                                     std::shared_ptr<OAuth2Service> oauth2Service);
     
     // 辅助方法
-    static void sendJsonResponse(struct mg_connection *c, int statusCode, const std::string& json);
-    static void sendErrorResponse(struct mg_connection *c, int statusCode, const std::string& message);
-    static bool validateRequestToken(struct mg_http_message *hm, std::shared_ptr<AccountService> service, 
-                                    std::string& accountId);
+    void sendJsonResponse(Poco::Net::HTTPServerResponse& res, int statusCode, const std::string& json);
+    void sendErrorResponse(Poco::Net::HTTPServerResponse& res, int statusCode, const std::string& message);
+    bool validateRequestToken(Poco::Net::HTTPServerRequest& req, std::shared_ptr<AccountService> service,
+                                      std::string& accountId);
+    
+public:
+    // 获取OAuth2服务
+    std::shared_ptr<OAuth2Service> getOAuth2Service() { return oauth2Service; }
+    
+    // 获取账号服务
+    std::shared_ptr<AccountService> getAccountService() { return service; }
 };
 
 #endif // REST_API_SERVER_H

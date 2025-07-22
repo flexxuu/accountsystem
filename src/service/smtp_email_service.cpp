@@ -8,6 +8,10 @@
 #include <sstream>
 
 #include "util/log.h"
+#include <Poco/Net/SecureSMTPClientSession.h>
+#include <Poco/Net/StreamSocket.h>
+#include <Poco/Net/SecureStreamSocket.h>
+#include <Poco/Net/Context.h>
 
 SmtpEmailService::SmtpEmailService(const std::string& server, int port, 
                                    const std::string& username, const std::string& password)
@@ -61,8 +65,11 @@ void SmtpEmailService::sendEmail(const std::string& to, const std::string& subje
             "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH"
         );
         
-        // 创建SMTP会话
-        Poco::Net::SMTPClientSession session(server, port, context);
+        // 创建带SSL上下文的安全套接字和会话
+        Poco::Net::SocketAddress addr(server, port);
+        Poco::NetSSL::SecureStreamSocket socket(context);
+        socket.connect(addr);
+        Poco::Net::SecureSMTPClientSession session(socket);
         
         // 设置超时
         session.setTimeout(Poco::Timespan(30, 0)); // 30秒
@@ -74,11 +81,11 @@ void SmtpEmailService::sendEmail(const std::string& to, const std::string& subje
         Poco::Net::MailMessage message;
         message.setSender(username);
         message.addRecipient(Poco::Net::MailRecipient(Poco::Net::MailRecipient::PRIMARY_RECIPIENT, to));
-        message.setSubject(subject, "UTF-8");
+        message.setSubject(subject);
         
         // 设置邮件内容
         message.setContentType("text/plain; charset=UTF-8");
-        message.setContent(body, "UTF-8");
+        message.setContent(body, Poco::Net::MailMessage::ENCODING_8BIT);
         
         // 发送邮件
         session.sendMessage(message);

@@ -1,6 +1,15 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.22)
+cmake_policy(SET CMP0079 NEW)
+project(AccountSystem C CXX)
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-project(AccountSystem CXX)
+set(JWT_JSON_LIBRARY "nlohmann_json" CACHE STRING "JSON library to use" FORCE)
+set(JWT_BUILD_TESTS OFF CACHE BOOL "Build tests" FORCE)
+set(JWT_DISABLE_PICOJSON ON CACHE BOOL "Disable picojson support" FORCE)
+set(JWT_USE_NLOHMANN_JSON ON CACHE BOOL "Use nlohmann_json" FORCE)
+add_subdirectory(thirdlib/jwt-cpp)
+include_directories(${PROJECT_SOURCE_DIR}/thirdlib/jwt-cpp/include)
 
 # 设置C++标准
 set(CMAKE_CXX_STANDARD 17)
@@ -10,14 +19,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_compile_options(-Wall -Wextra -Wpedantic)
 
 # 查找依赖库
-find_package(OpenSSL REQUIRED)
-find_package(nlohmann_json 3.2.0 REQUIRED)
-# 添加spdlog依赖
+
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 find_package(spdlog REQUIRED)
+find_package(nlohmann_json 3.2.0 REQUIRED)
 find_package(fmt REQUIRED)
 find_package(Poco REQUIRED COMPONENTS Net NetSSL Util)
-
-# 添加子目录
 add_subdirectory(src)
 add_subdirectory(test)
 
@@ -29,12 +36,12 @@ install(TARGETS account_system_server DESTINATION bin)
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/config DESTINATION .)
 
 # 修改target_link_libraries添加日志库
-target_link_libraries(account_system_server PRIVATE
-  OpenSSL::SSL
+target_link_libraries(account_system_server PRIVATE jwt-cpp::jwt-cpp
+
   nlohmann_json::nlohmann_json
   spdlog::spdlog
   fmt::fmt
   Poco::Net
-  Poco::NetSSL
+  Poco::NetSSL_OpenSSL
   Poco::Util
 )

@@ -1,12 +1,15 @@
+#include "../../thirdlib/jwt-cpp/include/jwt-cpp/jwt.h"
 #include "account_service_impl.h"
+#include <jwt-cpp/traits/nlohmann-json/traits.h>
+#include <regex>
+using json_traits = jwt::traits::nlohmann_json;
 #include "util/log.h"
 #include "util/security_utils.h"
 #include <nlohmann/json.hpp>
 #include <chrono>
 #include <sstream>
 #include <iomanip>
-#include <openssl/sha.h>
-#include <jwt/jwt.h>
+
 
 AccountServiceImpl::AccountServiceImpl(std::shared_ptr<AccountRepository> repository, 
                                       std::shared_ptr<EmailService> emailService,
@@ -52,7 +55,7 @@ std::string AccountServiceImpl::createAccount(const std::string& username, const
         repository->createAccount(account);
 
         // 生成并发送验证邮件
-        std::string verificationCode = repository->createVerificationCode(email, VerificationCodeType::EMAIL_VERIFICATION);
+        std::string verificationCode = repository->createVerificationCode(email, VerificationCodeType::EMAIL_CHANGE);
         emailService->sendVerificationEmail(email, verificationCode);
         Log::info("账号创建成功，验证邮件已发送: id={}", accountId);
 
@@ -118,7 +121,7 @@ bool AccountServiceImpl::verifyPassword(const std::string& password, const std::
 bool AccountServiceImpl::verifyEmail(const std::string& email, const std::string& code) {
     Log::info("验证邮箱: {}", email);
     try {
-        bool verified = repository->verifyCode(email, code, VerificationCodeType::EMAIL_VERIFICATION);
+        bool verified = repository->verifyCode(email, code, VerificationCodeType::EMAIL_CHANGE);
         if (verified) {
             auto account = repository->getAccountByEmail(email);
             if (account) {
@@ -176,16 +179,13 @@ std::string AccountServiceImpl::login(const std::string& usernameOrEmail, const 
 
 std::string AccountServiceImpl::generateJwtToken(const std::string& accountId) {
     auto now = std::chrono::system_clock::now();
-    auto exp = now + std::chrono::hours(24);
+    auto expiration = now + std::chrono::hours(24);
 
-    jwt::claim payload;
-    payload.set_claim("sub", accountId);
-    payload.set_claim("iat", std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count());
-    payload.set_claim("exp", std::chrono::duration_cast<std::chrono::seconds>(exp.time_since_epoch()).count());
-
-    jwt::jwt_object obj{jwt::params::algorithm(jwt::algorithm::hs256(jwtSecret)),
-                       jwt::params::payload(payload)};
-    return obj.signature();
+    return jwt::create<json_traits>()
+        .set_subject(accountId)
+        .set_issued_at(now)
+        .set_expires_at(expiration)
+        .sign(jwt::algorithm::hs256{jwtSecret});
 }
 
 std::shared_ptr<Account> AccountServiceImpl::getAccountById(const std::string& id) {
@@ -196,6 +196,11 @@ std::shared_ptr<Account> AccountServiceImpl::getAccountById(const std::string& i
 std::shared_ptr<Account> AccountServiceImpl::getAccountByUsername(const std::string& username) {
     Log::info("获取账号信息: username={}", username);
     return repository->getAccountByUsername(username);
+}
+
+std::shared_ptr<Account> AccountServiceImpl::getAccountByEmail(const std::string& email) {
+    Log::info("获取账号信息: email={}", email);
+    return repository->getAccountByEmail(email);
 }
 
 bool AccountServiceImpl::updateAccount(const std::string& accountId, const std::string& newUsername, const std::string& newEmail) {
@@ -277,21 +282,20 @@ bool AccountServiceImpl::deleteAccount(const std::string& accountId) {
 }
 
 bool AccountServiceImpl::validateToken(const std::string& token, std::string& accountId) {
-    Log::debug("验证Token: {}", token);
     try {
-        auto decoded = jwt::decode(token);
-        auto verifier = jwt::verify()
-            .allow_algorithm(jwt::algorithm::hs256(jwtSecret))
-            .with_claim("exp", jwt::claim::create<std::int64_t>(
-                [](std::int64_t exp) { return exp > std::time(nullptr); }
-            ));
+        auto decoded = jwt::decode<json_traits>(token);
+        auto verifier = jwt::verify<jwt::traits::nlohmann_json>()
+            .allow_algorithm(jwt::algorithm::hs256{jwtSecret})
+            .with_issuer("account-system")
+            .expires_at_leeway(60); // 允许60秒的时间偏差
 
         verifier.verify(decoded);
-        accountId = decoded.get_payload_claim("sub").as_string();
+
+        accountId = decoded.get_subject();
         Log::debug("Token验证成功: accountId={}", accountId);
         return true;
     } catch (const std::exception& e) {
-        Log::warn("Token验证失败: {}", e.what());
+        Log::error("Token validation failed: {}", e.what());
         return false;
     }
 }

@@ -5,7 +5,7 @@
 #include <Poco/Net/HTTPClientSession.h>
 #include <Poco/Net/HTTPRequest.h>
 #include <Poco/Net/HTTPResponse.h>
-#include <Poco/Net/URI.h>
+#include <Poco/URI.h>
 #include <Poco/Net/Context.h>
 #include <Poco/StreamCopier.h>
 #include <Poco/Exception.h>
@@ -58,12 +58,12 @@ private:
 
 OAuth2ServiceImpl::OAuth2ServiceImpl(std::shared_ptr<AccountService> accountService,
                                    std::shared_ptr<HttpClient> httpClient,
-                                   std::shared_ptr<JsonParser> jsonParser)
+                                   std::shared_ptr<Poco::JSON::Parser> jsonParser)
     : accountService_(std::move(accountService)),
       httpClient_(std::move(httpClient)),
       jsonParser_(std::move(jsonParser)) {
-    if (!httpClient_) httpClient_ = std::make_shared<HttpClient>();
-    if (!jsonParser_) jsonParser_ = std::make_shared<JsonParser>();
+    if (!httpClient_) httpClient_ = HttpClient::create();
+    if (!jsonParser_) jsonParser_ = std::make_shared<Poco::JSON::Parser>();
     Log::info("OAuth2ServiceImpl初始化成功");
 }
 
@@ -133,13 +133,14 @@ OAuth2AuthResult OAuth2ServiceImpl::authenticate(OAuth2Provider provider, const 
         }
 
         auto tokenData = jsonParser_->parse(tokenResponse);
-        if (tokenData.find("access_token") == tokenData.end()) {
+        Poco::JSON::Object::Ptr tokenObj = tokenData.extract<Poco::JSON::Object::Ptr>();
+        if (!tokenObj->has("access_token")) {
             result.errorMessage = "令牌响应不包含access_token: " + tokenResponse;
             Log::warn("OAuth2认证失败: {}", result.errorMessage);
             return result;
         }
 
-        std::string accessToken = tokenData["access_token"];
+        std::string accessToken = tokenObj->getValue<std::string>("access_token");
         auto userInfo = getUserInfo(provider, accessToken);
         if (userInfo.empty()) {
             result.errorMessage = "获取用户信息失败";
@@ -150,11 +151,11 @@ OAuth2AuthResult OAuth2ServiceImpl::authenticate(OAuth2Provider provider, const 
         std::string providerName;
         switch (provider) {
             case OAuth2Provider::GOOGLE: providerName = "google";
- break;
+                break;
             case OAuth2Provider::FACEBOOK: providerName = "facebook";
- break;
+                break;
             case OAuth2Provider::GITHUB: providerName = "github";
- break;
+                break;
             default: providerName = "custom";
         }
 
@@ -193,9 +194,10 @@ std::string OAuth2ServiceImpl::refreshAccessToken(OAuth2Provider provider, const
     std::string response = httpClient_->post(config.tokenUrl, ss.str(), headers);
     auto tokenData = jsonParser_->parse(response);
 
-    if (tokenData.find("access_token") != tokenData.end()) {
+    Poco::JSON::Object::Ptr tokenObj = tokenData.extract<Poco::JSON::Object::Ptr>();
+    if (tokenObj->has("access_token")) {
         Log::info("OAuth2令牌刷新成功");
-        return tokenData["access_token"];
+        return tokenObj->getValue<std::string>("access_token");
     }
 
     Log::warn("OAuth2令牌刷新失败: {}", response);
@@ -234,7 +236,17 @@ std::map<std::string, std::string> OAuth2ServiceImpl::getUserInfo(OAuth2Provider
         return {};
     }
 
-    return jsonParser_->parse(response);
+    auto jsonVar = jsonParser_->parse(response);
+    Poco::JSON::Object::Ptr jsonObj = jsonVar.extract<Poco::JSON::Object::Ptr>();
+    std::map<std::string, std::string> userInfoMap;
+    if (jsonObj) {
+        std::vector<std::string> keys;
+        jsonObj->getNames(keys);
+        for (const auto& key : keys) {
+            userInfoMap[key] = jsonObj->getValue<std::string>(key);
+        }
+    }
+    return userInfoMap;
 }
 
 std::string OAuth2ServiceImpl::processUserInfo(const std::string& provider, const std::map<std::string, std::string>& userInfo) {

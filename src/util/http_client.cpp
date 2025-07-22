@@ -106,6 +106,6 @@ private:
 
 };
 
-std::unique_ptr<HttpClient> createHttpClient() {
+std::unique_ptr<HttpClient> HttpClient::create() {
     return std::make_unique<PocoHttpClient>();
-    }
+}

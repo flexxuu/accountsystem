@@ -21,6 +21,9 @@ std::string generateSecureRandomString(size_t length = 32);
 // HMAC-SHA256签名
 std::string hmacSha256(const std::string& key, const std::string& data);
 
+// 生成JWT访问令牌
+std::string generateJwtToken(const std::string& accountId);
+
 // 生成JWT刷新令牌
 std::string generateRefreshToken(const std::string& accountId);
 

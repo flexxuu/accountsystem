@@ -23,6 +23,7 @@ public:
     // 账号信息
     virtual std::shared_ptr<Account> getAccountById(const std::string& id) = 0;
     virtual std::shared_ptr<Account> getAccountByUsername(const std::string& username) = 0;
+    virtual std::shared_ptr<Account> getAccountByEmail(const std::string& email) = 0;
     
     // 账号更新
     virtual bool updateAccount(const std::string& accountId, const std::string& newUsername, 
@@ -34,4 +35,4 @@ public:
     virtual bool deleteAccount(const std::string& accountId) = 0;
 };
 
-#endif // ACCOUNT_SERVICE_H    
+#endif // ACCOUNT_SERVICE_H

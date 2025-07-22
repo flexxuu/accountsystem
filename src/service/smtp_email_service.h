@@ -14,6 +14,8 @@
 
 class SmtpEmailService : public EmailService {
 public:
+    virtual ~SmtpEmailService() override;
+public:
     SmtpEmailService(const std::string& server, int port, 
                     const std::string& username, const std::string& password);
     
