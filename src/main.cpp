@@ -5,13 +5,15 @@
 #include <iostream>
 #include <memory>
 #include <string>
-#include "account_service_impl.h"
-#include "in_memory_account_repository.h"
-#include "smtp_email_service.h"
-#include "rest_api_server.h"
-#include "oauth2_service_impl.h"
-#include "http_client.h"
-#include "json_parser.h"
+#include "service/account_service_impl.h"
+#include "repository/in_memory_account_repository.h"
+#include "service/smtp_email_service.h"
+#include "controller/rest_api_server.h"
+#include "service/oauth2_service_impl.h"
+#include "util/http_client.h"
+#include "util/config_utils.h"
+#include "util/poco_http_client.h"
+#include <Poco/JSON/Parser.h>
 #include <fstream>
 #include "nlohmann/json.hpp"
 #include "util/log.h"
@@ -47,29 +49,38 @@ int main() {
         int serverPort = config["server"]["port"].get<int>();
         
         // 初始化HTTP客户端和JSON解析器
-        auto httpClient = std::make_shared<HttpClient>();
-        auto jsonParser = std::make_shared<JsonParser>();
+        auto httpClient = std::make_shared<PocoHttpClient>();
         
-        // 初始化OAuth2服务
-        auto oauth2Config = ConfigUtils::getOAuth2Config();
-        auto oauth2Service = std::make_shared<OAuth2ServiceImpl>(accountService, httpClient, jsonParser, oauth2Config);
         
         // 初始化存储库
         auto repository = std::make_shared<InMemoryAccountRepository>();
         repository->initialize();
-        
+
         // 初始化邮件服务
         auto emailService = std::make_shared<SmtpEmailService>(
             smtpServer, smtpPort, smtpUsername, smtpPassword
         );
-        
-        // 初始化账号服务
-        auto accountService = std::make_shared<AccountServiceImpl>(
+
+        // 初始化账户服务
+        auto accountServiceImpl = std::make_shared<AccountServiceImpl>(
             repository, emailService, jwtSecret
         );
+
+        // 初始化JSON解析器
+        auto jsonParser = std::make_shared<Poco::JSON::Parser>();
+
+        // 初始化OAuth2服务
+        auto oauth2Config = ConfigUtils::getOAuth2Config(OAuth2Provider::GOOGLE);
+        auto oauth2Service = std::make_shared<OAuth2ServiceImpl>(accountServiceImpl, httpClient, jsonParser);
+        if (oauth2Config.has_value()) {
+            oauth2Service->initialize({{OAuth2Provider::GOOGLE, oauth2Config.value()}});
+        } else {
+            Log::error("Failed to load OAuth2 configuration");
+            return 1;
+        }
         
         // 初始化REST API服务器
-        auto server = std::make_shared<RestApiServer>(accountService, oauth2Service, serverPort);
+        auto server = std::make_shared<RestApiServer>(accountServiceImpl, oauth2Service, serverPort);
         
         // 启动服务器
         Log::info("Starting account system server on port {}", serverPort);

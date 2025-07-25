@@ -7,6 +7,12 @@
 #include <algorithm>
 #include <random>
 #include "util/log.h"
+#include <chrono>
+#include <nlohmann/json.hpp>
+#define JWT_USE_NLOHMANN_JSON
+#include <jwt-cpp/traits/nlohmann-json/traits.h>
+#include <jwt-cpp/jwt.h>
+using namespace jwt;
 
 void InMemoryAccountRepository::initialize() {
     // 无需初始化，内存存储自动准备好
@@ -164,11 +170,13 @@ std::string InMemoryAccountRepository::createVerificationCode(const std::string&
     std::string code = generateRandomCode(6);
     
     // 存储验证码
+    auto now = std::chrono::system_clock::now();
     VerificationCode verificationCode{
         code,
         email,
         type,
-        std::chrono::system_clock::now()
+        now,
+        now + std::chrono::minutes(15) // 15分钟有效期
     };
     
     verificationCodes[email] = verificationCode;
@@ -222,5 +230,48 @@ std::string InMemoryAccountRepository::generateRandomToken(int length) {
         token[i] = charset[dis(gen)];
     }
     
+    return token;
+}
+
+std::string InMemoryAccountRepository::generateRandomCode(int length) {
+    const std::string characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    std::random_device rd;
+    std::mt19937 generator(rd());
+    std::uniform_int_distribution<> distribution(0, characters.size() - 1);
+
+    std::string code;
+    for (int i = 0; i < length; ++i) {
+        code += characters[distribution(generator)];
+    }
+    return code;
+}
+
+bool InMemoryAccountRepository::verifyCode(const std::string& email, const std::string& code, VerificationCodeType type) {
+    std::lock_guard<std::mutex> lock(mutex);
+    auto it = verificationCodes.find(email);
+    if (it == verificationCodes.end()) return false;
+
+    auto& codeEntry = it->second;
+    if (codeEntry.code != code || codeEntry.type != type) return false;
+
+    auto now = std::chrono::system_clock::now();
+    if (codeEntry.expiryTime < now) return false;
+
+    verificationCodes.erase(it);
+    return true;
+}
+
+std::string InMemoryAccountRepository::createAuthToken(const std::string& userId) {
+    auto now = std::chrono::system_clock::now();
+    auto expiry = now + std::chrono::hours(24);
+
+    // 确保已定义 JWT_USE_NLOHMANN_JSON 宏
+    auto token = jwt::create<jwt::traits::nlohmann_json>(jwt::default_clock{})
+        .set_issuer("account-system")
+        .set_subject(userId)
+        .set_issued_at(now)
+        .set_expires_at(expiry)
+        .sign(jwt::algorithm::none{});
+
     return token;
 }

@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.22)
 
 # 查找Catch2测试框架
-find_package(Catch2 2 REQUIRED)
+include_directories(${CMAKE_SOURCE_DIR}/include)
+link_directories(${CMAKE_SOURCE_DIR}/lib)
 
 # 收集测试源文件
 file(GLOB TEST_SOURCES "*.cpp")
@@ -16,13 +17,14 @@ target_include_directories(account_system_tests PRIVATE
 # 链接测试库和主程序库
  target_link_libraries(account_system_tests PRIVATE
     account_system_lib
-    Catch2::Catch2WithMain
-    Poco::Net
-    Poco::Util
+    gtest
+    gtest_main
+    PocoNet
+    PocoUtil
     spdlog::spdlog
 )
 
 # 启用测试发现
 include(CTest)
-include(Catch)
-catch_discover_tests(account_system_tests)
+include(GoogleTest)
+gtest_discover_tests(account_system_tests)

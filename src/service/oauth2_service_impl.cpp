@@ -9,6 +9,10 @@
 #include <Poco/Net/Context.h>
 #include <Poco/StreamCopier.h>
 #include <Poco/Exception.h>
+#include <Poco/JSON/Parser.h>
+#include <Poco/JSON/JSON.h>
+#include <Poco/JSON/Object.h>
+#include <Poco/SharedPtr.h>
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
@@ -62,7 +66,7 @@ OAuth2ServiceImpl::OAuth2ServiceImpl(std::shared_ptr<AccountService> accountServ
     : accountService_(std::move(accountService)),
       httpClient_(std::move(httpClient)),
       jsonParser_(std::move(jsonParser)) {
-    if (!httpClient_) httpClient_ = HttpClient::create();
+    if (!httpClient_) httpClient_ = HttpClientFactory::createDefaultFactory()->createClient();
     if (!jsonParser_) jsonParser_ = std::make_shared<Poco::JSON::Parser>();
     Log::info("OAuth2ServiceImpl初始化成功");
 }

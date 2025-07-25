@@ -9,7 +9,7 @@
 #include <string>
 #include <Poco/Net/SMTPClientSession.h>
 #include <Poco/Net/MailMessage.h>
-#include <Poco/Net/SSLManager.h>
+
 #include <Poco/Net/Context.h>
 
 class SmtpEmailService : public EmailService {

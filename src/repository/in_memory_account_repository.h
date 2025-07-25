@@ -18,6 +18,7 @@ struct VerificationCode {
     std::string email;
     VerificationCodeType type;
     std::chrono::system_clock::time_point createdAt;
+    std::chrono::system_clock::time_point expiryTime;
 };
 
 struct AuthToken {
@@ -60,4 +61,4 @@ private:
     void cleanExpiredTokens();
 };
 
-#endif // IN_MEMORY_ACCOUNT_REPOSITORY_H    
+#endif // IN_MEMORY_ACCOUNT_REPOSITORY_H

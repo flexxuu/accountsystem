@@ -1,14 +1,19 @@
 #include "security_utils.h"
 #include "config_utils.h"
-#include <Poco/Crypto/SHA256Engine.h>
-#include <Poco/Crypto/HMACEngine.h>
-#include <Poco/Crypto/Random.h>
+#include <Poco/SHA2Engine.h>
+#include <Poco/HMACEngine.h>
+
 #include <Poco/DigestStream.h>
 #include <Poco/StreamCopier.h>
+#include <openssl/rand.h>
+#include <openssl/hmac.h>
 #include <sstream>
 #include <iomanip>
 #include <chrono>
-#include <jwt/jwt.h>
+#include <jwt-cpp/jwt.h>
+#include <jwt-cpp/traits/nlohmann-json/traits.h>
+#include <nlohmann/json.hpp>
+
 #include "log.h"
 
 namespace security {
@@ -16,7 +21,7 @@ namespace security {
 // 生成随机盐值
 std::string generateSalt(size_t length) {
     std::vector<unsigned char> salt(length);
-    Poco::Crypto::Random::bytes(salt.data(), salt.size());
+    if (RAND_bytes(salt.data(), salt.size()) != 1) {
         Log::error("生成随机盐值失败");
         throw std::runtime_error("Failed to generate salt");
     }
@@ -31,7 +36,7 @@ std::string generateSalt(size_t length) {
 // 使用SHA256和盐值哈希密码
 std::string hashPasswordWithSalt(const std::string& password, const std::string& salt) {
     std::string saltedPassword = password + salt;
-    Poco::Crypto::SHA256Engine sha256;
+    Poco::SHA2Engine sha256(Poco::SHA2Engine::SHA_256);
     sha256.update(saltedPassword);
     const auto& digest = sha256.digest();
     
@@ -68,13 +73,18 @@ std::string generateSecureRandomString(size_t length) {
 
 // HMAC-SHA256签名
 std::string hmacSha256(const std::string& key, const std::string& data) {
-    Poco::Crypto::HMACEngine hmac(Poco::Crypto::DigestEngine::ALG_SHA256, key.data(), key.size());
-    hmac.update(data);
-    const auto& digest = hmac.digest();
+    unsigned char digest[EVP_MAX_MD_SIZE];
+    unsigned int digestLen;
+    
+    HMAC_CTX* ctx = HMAC_CTX_new();
+    HMAC_Init_ex(ctx, key.data(), key.size(), EVP_sha256(), nullptr);
+    HMAC_Update(ctx, reinterpret_cast<const unsigned char*>(data.data()), data.size());
+    HMAC_Final(ctx, digest, &digestLen);
+    HMAC_CTX_free(ctx);
     
     std::stringstream ss;
-    for (unsigned char c : digest) {
-        ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(c);
+    for (unsigned int i = 0; i < digestLen; ++i) {
+        ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(digest[i]);
     }
     return ss.str();
 }
@@ -84,33 +94,27 @@ std::string generateJwtToken(const std::string& accountId) {
     auto now = std::chrono::system_clock::now();
     auto exp = now + std::chrono::hours(ConfigUtils::getJWTConfig().expires_hours);
 
-    jwt::jwt_object obj{jwt::params{
-        .algorithm = "HS256",
-        .secret = ConfigUtils::getJWTConfig().secret_key,
-        .payload_claims = {
-            {"sub", accountId},
-            {"iat", std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count()},
-            {"exp", std::chrono::duration_cast<std::chrono::seconds>(exp.time_since_epoch()).count()},
-            {"jti", generateSecureRandomString(16)}
-        }
-    }};
-    return obj.signature();
+    auto token = jwt::create<jwt::traits::nlohmann_json>()
+        .set_issued_at(now)
+        .set_expires_at(exp)
+        .set_payload_claim("sub", jwt::basic_claim<jwt::traits::nlohmann_json>(accountId))
+        .set_payload_claim("jti", jwt::basic_claim<jwt::traits::nlohmann_json>(generateSecureRandomString(16)))
+        .sign(jwt::algorithm::hs256{ConfigUtils::getJWTConfig().secret_key});
+    return token;
 }
 
 // 生成JWT刷新令牌
 std::string generateRefreshToken(const std::string& accountId) {
     auto now = std::chrono::system_clock::now();
-    auto exp = now + std::chrono::days(30); // 刷新令牌有效期30天
+    auto exp = now + std::chrono::hours(24 * 30);
     
-    std::stringstream payload;
-    payload << "sub=" << accountId
-            << ";iat=" << std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count()
-            << ";exp=" << std::chrono::duration_cast<std::chrono::seconds>(exp.time_since_epoch()).count()
-            << ";jti=" << generateSecureRandomString(16);
-    
-    // 从配置获取刷新令牌密钥（实际实现应从配置文件读取）
-    std::string refreshSecret = ConfigUtils::getRefreshTokenConfig().secret_key;
-    return hmacSha256(refreshSecret, payload.str());
+    auto token = jwt::create<jwt::traits::nlohmann_json>()
+        .set_issued_at(now)
+        .set_expires_at(exp)
+        .set_payload_claim("sub", jwt::basic_claim<jwt::traits::nlohmann_json>(accountId))
+        .set_payload_claim("jti", jwt::basic_claim<jwt::traits::nlohmann_json>(generateSecureRandomString(16)))
+        .sign(jwt::algorithm::hs256{ConfigUtils::getRefreshTokenConfig().secret_key});
+    return token;
 }
 
 // 验证JWT刷新令牌

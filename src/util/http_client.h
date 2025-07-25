@@ -7,14 +7,12 @@
 #include <Poco/Net/HTTPClientSession.h>
 #include <Poco/Net/HTTPRequest.h>
 #include <Poco/Net/HTTPResponse.h>
-#include <Poco/Net/SSLManager.h>
+
 #include <Poco/Net/Context.h>
 #include <Poco/Util/Application.h>
 
-// HTTP客户端接口
 class HttpClient {
   public:
-      static std::unique_ptr<HttpClient> create();
       virtual ~HttpClient() = default;
 
     // 发送GET请求
@@ -29,9 +27,18 @@ class HttpClient {
     // 启用/禁用SSL验证
     virtual void setSSLVerification(bool enable) = 0;
 
-private:
+protected:
     HttpClient() = default;
     HttpClient(const HttpClient&) = delete;
     HttpClient& operator=(const HttpClient&) = delete;
+};
+
+// HTTP客户端接口
+class HttpClientFactory {
+public:
+    virtual ~HttpClientFactory() = default;
+    virtual std::unique_ptr<HttpClient> createClient();
+
+    static std::unique_ptr<HttpClientFactory> createDefaultFactory();
 };
 #endif // HTTP_CLIENT_H

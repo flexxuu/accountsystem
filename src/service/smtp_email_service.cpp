@@ -65,9 +65,9 @@ void SmtpEmailService::sendEmail(const std::string& to, const std::string& subje
             "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH"
         );
         
-        // 创建带SSL上下文的安全套接字和会话
+        // 创建安全SMTP会话
         Poco::Net::SocketAddress addr(server, port);
-        Poco::NetSSL::SecureStreamSocket socket(context);
+        Poco::Net::StreamSocket socket;
         socket.connect(addr);
         Poco::Net::SecureSMTPClientSession session(socket);
         
