@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <random>
 #include "util/log.h"
+using namespace util;
 #include <chrono>
 #include <nlohmann/json.hpp>
 #define JWT_USE_NLOHMANN_JSON

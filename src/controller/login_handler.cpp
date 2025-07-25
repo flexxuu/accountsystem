@@ -2,6 +2,7 @@
 #include <Poco/Net/HTTPRequestHandler.h>
 #include <nlohmann/json.hpp>
 #include "util/log.h"
+using namespace util;
 
 using json = nlohmann::json;
 

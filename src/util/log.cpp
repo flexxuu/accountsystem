@@ -5,6 +5,8 @@
 #include <filesystem>
 namespace fs = std::filesystem;
 
+namespace util {
+
 std::shared_ptr<spdlog::logger> Log::logger_;
 
 void Log::initialize(const std::string& level, const std::string& file_path,
@@ -46,3 +48,5 @@ void Log::initialize(const std::string& level, const std::string& file_path,
     spdlog::set_default_logger(logger_);
     spdlog::flush_on(spdlog::level::info);
 }
+
+} // namespace util

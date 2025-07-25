@@ -1,10 +1,13 @@
-#ifndef CONFIG_UTILS_H
-#define CONFIG_UTILS_H
+#ifndef UTIL_CONFIG_UTILS_H
+#define UTIL_CONFIG_UTILS_H
 
 #include <string>
 #include <map>
 #include <optional>
+#include <nlohmann/json.hpp>
 #include "service/oauth2_service.h"
+
+namespace util {
 
 // 配置项结构体
 struct AppConfig {
@@ -43,30 +46,68 @@ struct AppConfig {
 // 配置工具类
 class ConfigUtils {
 public:
-    // 加载配置文件
+    /**
+     * 加载应用配置
+     * @param configPath 配置文件路径
+     * @return 是否加载成功
+     */
     static bool load(const std::string& file_path);
 
-    // 获取服务器配置
+    /**
+     * 获取服务器配置
+     * @return 服务器配置
+     */
     static const AppConfig::Server& getServerConfig();
 
-    // 获取JWT配置
+    /**
+     * 获取JWT配置
+     * @return JWT配置
+     */
     static const AppConfig::JWT& getJWTConfig();
 
-    // 获取刷新令牌配置
+    /**
+     * 获取刷新令牌配置
+     * @return 刷新令牌配置
+     */
     static const AppConfig::RefreshToken& getRefreshTokenConfig();
 
-    // 获取SMTP配置
+    /**
+     * 获取SMTP配置
+     * @return SMTP配置
+     */
     static const AppConfig::SMTP& getSMTPConfig();
 
-    // 获取OAuth2提供商配置
+    /**
+     * 获取OAuth2配置
+     * @param provider 提供商枚举
+     * @return OAuth2配置（如果存在）
+     */
     static std::optional<OAuth2Config> getOAuth2Config(OAuth2Provider provider);
 
-    // 检查配置是否已加载
+    /**
+     * 获取服务器端口
+     * @return 服务器端口
+     */
+    static int getServerPort();
+
+    /**
+     * 获取数据库连接字符串
+     * @return 数据库连接字符串
+     */
+    static std::string getDatabaseConnectionString();
+
+    /**
+     * 检查配置是否已加载
+     * @return 配置是否已加载
+     */
     static bool isLoaded();
 
 private:
     static inline AppConfig config_;
     static inline bool is_loaded_ = false;
+    static inline nlohmann::json app_config_;
 };
 
-#endif // CONFIG_UTILS_H
+} // namespace util
+
+#endif // UTIL_CONFIG_UTILS_H

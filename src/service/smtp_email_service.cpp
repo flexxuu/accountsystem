@@ -8,6 +8,7 @@
 #include <sstream>
 
 #include "util/log.h"
+using namespace util;
 #include <Poco/Net/SecureSMTPClientSession.h>
 #include <Poco/Net/StreamSocket.h>
 #include <Poco/Net/SecureStreamSocket.h>

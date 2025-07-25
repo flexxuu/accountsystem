@@ -54,7 +54,8 @@ find_package(fmt REQUIRED)              # 格式化库
 # 查找本地编译的Poco库（关键依赖）
 # 使用NO_*选项确保只使用项目内编译的版本，不依赖系统库
 find_package(Poco REQUIRED COMPONENTS Net NetSSL JSON Util Foundation Crypto
-    PATHS "${PROJECT_SOURCE_DIR}/thirdlib/poco-poco-1.14.2-release/build"
+#    PATHS "${PROJECT_SOURCE_DIR}/thirdlib/poco-poco-1.14.2-release/build"
+    PATHS "${PROJECT_SOURCE_DIR}/lib"
     NO_DEFAULT_PATH        # 不使用默认搜索路径
     NO_CMAKE_PATH          # 不搜索CMAKE_PREFIX_PATH
     NO_CMAKE_ENVIRONMENT_PATH # 忽略环境变量
@@ -64,7 +65,8 @@ find_package(Poco REQUIRED COMPONENTS Net NetSSL JSON Util Foundation Crypto
     NO_CMAKE_SYSTEM_PATH)  # 不使用系统路径
 
 # 配置Poco库链接 - 根目录设置后所有子目录共享
-link_directories("${PROJECT_SOURCE_DIR}/thirdlib/poco-poco-1.14.2-release/build/lib")
+# link_directories("${PROJECT_SOURCE_DIR}/thirdlib/poco-poco-1.14.2-release/build/lib")
+link_directories("${PROJECT_SOURCE_DIR}/lib")
 set(Poco_LIBRARIES PocoFoundation PocoNet PocoNetSSL PocoJSON PocoUtil PocoCrypto)
 
 # ==============================================================================
@@ -95,7 +97,8 @@ add_subdirectory(src)
 
 # 配置RPATH - 确保运行时能找到本地编译的库
 # 解决动态链接库路径问题，根目录统一设置避免子目录重复工作
-set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH};${PROJECT_SOURCE_DIR}/thirdlib/poco-poco-1.14.2-release/build/lib")
+# set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH};${PROJECT_SOURCE_DIR}/thirdlib/poco-poco-1.14.2-release/build/lib")
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH};${PROJECT_SOURCE_DIR}/lib") 
 set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 
 # ==============================================================================

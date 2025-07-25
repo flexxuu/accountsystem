@@ -30,6 +30,31 @@ std::string generateRefreshToken(const std::string& accountId);
 // 验证JWT刷新令牌
 bool validateRefreshToken(const std::string& token, std::string& accountId);
 
+class SecurityUtils {
+public:
+    /**
+     * 哈希密码
+     * @param password 原始密码
+     * @return 哈希后的密码
+     */
+    static std::string hashPassword(const std::string& password);
+
+    /**
+     * 验证密码
+     * @param password 原始密码
+     * @param hashedPassword 哈希后的密码
+     * @return 是否验证成功
+     */
+    static bool verifyPassword(const std::string& password, const std::string& hashedPassword);
+
+    /**
+     * 生成随机字符串
+     * @param length 字符串长度
+     * @return 随机字符串
+     */
+    static std::string generateRandomString(size_t length);
+};
+
 } // namespace security
 
 #endif // SECURITY_UTILS_H

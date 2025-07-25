@@ -1,4 +1,6 @@
 #include "change_password_handler.h"
+#include "util/log.h"
+using namespace util;
 #include <nlohmann/json.hpp>
 #include <sstream>
 

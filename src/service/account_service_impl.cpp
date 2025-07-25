@@ -4,6 +4,7 @@
 #include <regex>
 using json_traits = jwt::traits::nlohmann_json;
 #include "util/log.h"
+using namespace util;
 #include "util/security_utils.h"
 #include <nlohmann/json.hpp>
 #include <chrono>

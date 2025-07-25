@@ -1,6 +1,7 @@
 #ifndef POCO_HTTP_CLIENT_H
 #define POCO_HTTP_CLIENT_H
 
+#include <Poco/Net/PrivateKeyPassphraseHandler.h>
 #include "http_client.h"
 #include <Poco/Net/HTTPClientSession.h>
 #include <Poco/Net/HTTPRequest.h>

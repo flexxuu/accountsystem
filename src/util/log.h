@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 
+namespace util {
 class Log {
 public:
     static void initialize(const std::string& level, const std::string& file_path,
@@ -44,5 +45,6 @@ public:
 private:
     static std::shared_ptr<spdlog::logger> logger_;
 };
+} // namespace util
 
 #endif // LOG_H

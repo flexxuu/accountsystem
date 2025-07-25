@@ -1,5 +1,6 @@
 #include "oauth2_service_impl.h"
 #include "util/log.h"
+using namespace util;
 #include <sstream>
 #include <chrono>
 #include <Poco/Net/HTTPClientSession.h>

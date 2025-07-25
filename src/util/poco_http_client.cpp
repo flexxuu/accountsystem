@@ -1,4 +1,7 @@
+#include <Poco/Net/PrivateKeyPassphraseHandler.h>
 #include "poco_http_client.h"
+#include "util/log.h"
+#include <Poco/Net/PrivateKeyPassphraseHandler.h>
 #include <Poco/Net/HTTPClientSession.h>
 #include <Poco/Net/HTTPRequest.h>
 #include <Poco/Net/HTTPResponse.h>
@@ -64,7 +67,7 @@ std::string PocoHttpClient::performRequest(const std::string& url, const std::st
         ss << responseStream.rdbuf();
         return ss.str();
     } catch (Poco::Exception& e) {
-        Log::error("HTTP请求失败: {}", e.displayText());
+        util::Log::error("HTTP请求失败: {}", e.displayText());
         return "";
     }
 }

@@ -31,14 +31,14 @@ int main() {
         config_file >> config;
 
         // 初始化日志系统
-        Log::initialize(
+        util::Log::initialize(
             config["log"]["level"].get<std::string>(),
             config["log"]["file_path"].get<std::string>(),
             config["log"]["max_size"].get<size_t>(),
             config["log"]["max_files"].get<size_t>()
         );
 
-        Log::info("应用配置加载成功");
+        util::Log::info("应用配置加载成功");
 
         // 从配置读取参数
         std::string jwtSecret = config["jwt"]["secret"].get<std::string>();
@@ -70,12 +70,14 @@ int main() {
         auto jsonParser = std::make_shared<Poco::JSON::Parser>();
 
         // 初始化OAuth2服务
-        auto oauth2Config = ConfigUtils::getOAuth2Config(OAuth2Provider::GOOGLE);
+        auto oauth2Config = util::ConfigUtils::getOAuth2Config(OAuth2Provider::GOOGLE);
         auto oauth2Service = std::make_shared<OAuth2ServiceImpl>(accountServiceImpl, httpClient, jsonParser);
         if (oauth2Config.has_value()) {
-            oauth2Service->initialize({{OAuth2Provider::GOOGLE, oauth2Config.value()}});
+            std::map<OAuth2Provider, OAuth2Config> oauth2Configs;
+        oauth2Configs[OAuth2Provider::GOOGLE] = oauth2Config.value();
+        oauth2Service->initialize(oauth2Configs);
         } else {
-            Log::error("Failed to load OAuth2 configuration");
+            util::Log::error("Failed to load OAuth2 configuration");
             return 1;
         }
         
@@ -83,7 +85,7 @@ int main() {
         auto server = std::make_shared<RestApiServer>(accountServiceImpl, oauth2Service, serverPort);
         
         // 启动服务器
-        Log::info("Starting account system server on port {}", serverPort);
+        util::Log::info("Starting account system server on port {}", serverPort);
         server->start();
         
         // 等待服务器停止
@@ -96,7 +98,7 @@ int main() {
         
         return 0;
     } catch (const std::exception& e) {
-        Log::critical("Fatal error: {}", e.what());
+        util::Log::critical("Fatal error: {}", e.what());
         return 1;
     }
 }

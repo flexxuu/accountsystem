@@ -16,5 +16,17 @@
     "file_path": "logs/account_system.log",
     "max_size": 10485760,
     "max_files": 5
+  },
+  "oauth2_providers": {
+    "GOOGLE": {
+      "clientId": "your-client-id",
+      "clientSecret": "your-client-secret",
+      "authUrl": "https://oauth-provider.com/auth",
+      "tokenUrl": "https://oauth-provider.com/token",
+      "redirectUri": "http://localhost:8080/callback",
+      "scope": "openid profile email",
+      "grantType": "authorization_code",
+      "responseType": "code"
+    }
   }
 }

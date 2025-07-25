@@ -1,10 +1,12 @@
-#include "config_utils.h"
-#include "log.h"
+#include "util/config_utils.h"
+#include "util/log.h"
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include <stdexcept>
 
 using json = nlohmann::json;
+
+namespace util {
 
 bool ConfigUtils::load(const std::string& file_path) {
     try {
@@ -110,3 +112,5 @@ std::optional<OAuth2Config> ConfigUtils::getOAuth2Config(OAuth2Provider provider
 bool ConfigUtils::isLoaded() {
     return is_loaded_;
 }
+
+} // namespace util
