@@ -6,6 +6,7 @@
 #define ACCOUNT_SERVICE_IMPL_H
 
 #include "account_service.h"
+#include "config_service.h"
 #include <memory>
 #include "../repository/account_repository.h"
 #include "../model/account.h"
@@ -13,11 +14,9 @@
 
 class AccountServiceImpl : public AccountService {
 public:
-    AccountServiceImpl(std::shared_ptr<AccountRepository> repository, 
-                      std::shared_ptr<EmailService> emailService,
-                      const std::string& jwtSecret);
-    
-    // 账号管理
+    explicit AccountServiceImpl(std::shared_ptr<AccountRepository> repository,
+                                 std::shared_ptr<EmailService> emailService,
+                                 std::shared_ptr<ConfigService> configService); // 账号管理
     std::string createAccount(const std::string& username, const std::string& password, 
                              const std::string& email) override;
     bool verifyEmail(const std::string& email, const std::string& code) override;
@@ -44,6 +43,7 @@ public:
 private:
     std::shared_ptr<AccountRepository> repository;
     std::shared_ptr<EmailService> emailService;
+    std::shared_ptr<ConfigService> configService;
     std::string jwtSecret;
     
     // 辅助方法

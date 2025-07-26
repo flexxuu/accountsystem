@@ -23,7 +23,10 @@ Poco::Net::HTTPRequestHandler* RequestHandlerFactory::createRequestHandler(const
     routes["/account"] = [this]() -> Poco::Net::HTTPRequestHandler* { return new GetAccountHandler(accountService); };
     routes["/account/update"] = [this]() -> Poco::Net::HTTPRequestHandler* { return new UpdateAccountHandler(accountService); };
     routes["/account/delete"] = [this]() -> Poco::Net::HTTPRequestHandler* { return new DeleteAccountHandler(accountService); };
-    routes["/oauth2/authorize"] = [this]() -> Poco::Net::HTTPRequestHandler* { return new OAuth2AuthorizeHandler(oauth2Service); };
+    // 条件注册OAuth2路由
+    if (oauth2Service != nullptr) {
+        routes["/oauth2/authorize"] = [this]() -> Poco::Net::HTTPRequestHandler* { return new OAuth2AuthorizeHandler(oauth2Service); };
+    }
 
     auto it = routes.find(req.getURI());
     if (it != routes.end()) {

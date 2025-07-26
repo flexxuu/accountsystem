@@ -32,13 +32,4 @@ protected:
     HttpClient(const HttpClient&) = delete;
     HttpClient& operator=(const HttpClient&) = delete;
 };
-
-// HTTP客户端接口
-class HttpClientFactory {
-public:
-    virtual ~HttpClientFactory() = default;
-    virtual std::unique_ptr<HttpClient> createClient();
-
-    static std::unique_ptr<HttpClientFactory> createDefaultFactory();
-};
 #endif // HTTP_CLIENT_H

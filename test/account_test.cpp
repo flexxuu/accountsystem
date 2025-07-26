@@ -3,15 +3,18 @@
  * 账号系统测试用例
  */
 #include <gtest/gtest.h>
-#include "../model/account.h"
-#include "../repository/in_memory_account_repository.h"
-#include "../service/account_service_impl.h"
+#include "model/account.h"
+#include "repository/in_memory_account_repository.h"
+#include "service/account_service_impl.h"
+#include "service/json_config_service.h"
 #include <memory>
 #include <string>
 
 class AccountSystemTest : public ::testing::Test {
 protected:
     void SetUp() override {
+        // 初始化配置服务
+        configService = std::make_shared<JsonConfigService>("../config/app.json");
         repository = std::make_shared<InMemoryAccountRepository>();
         repository->initialize();
         
@@ -19,7 +22,7 @@ protected:
         emailService = std::make_shared<MockEmailService>();
         
         service = std::make_shared<AccountServiceImpl>(
-            repository, emailService, "test-jwt-secret"
+            repository, emailService, configService
         );
     }
     
@@ -45,6 +48,7 @@ protected:
     std::shared_ptr<InMemoryAccountRepository> repository;
     std::shared_ptr<MockEmailService> emailService;
     std::shared_ptr<AccountServiceImpl> service;
+    std::shared_ptr<JsonConfigService> configService;
 };
 
 TEST_F(AccountSystemTest, CreateAccount) {
@@ -94,26 +98,27 @@ TEST_F(AccountSystemTest, Login) {
 }
 
 TEST_F(AccountSystemTest, UpdateAccount) {
-    std::string accountId = service->createAccount("test_user", "Pass123!", "test@example.com");
-    std::string verificationCode = emailService->lastVerificationCode;
-    
-    // 激活账号
-    service->verifyEmail("test@example.com", verificationCode);
-    
-    // 更新账号
-    bool result = service->updateAccount(accountId, "new_username", "new@example.com");
-    EXPECT_TRUE(result);
-    
-    // 验证账号信息已更新
-    auto account = repository->getAccountById(accountId);
-    EXPECT_EQ(account->getUsername(), "new_username");
-    EXPECT_EQ(account->getEmail(), "new@example.com");
-    EXPECT_FALSE(account->isActive()); // 邮箱更改后应重新验证
-    
-    // 验证新的验证邮件已发送
-    EXPECT_EQ(emailService->lastSentEmail, "new@example.com");
-    EXPECT_FALSE(emailService->lastVerificationCode.empty());
-}
+        std::string accountId = service->createAccount("test_user", "Pass123!", "test@example.com");
+        std::string verificationCode = emailService->lastVerificationCode;
+        
+        // 激活账号
+        service->verifyEmail("test@example.com", verificationCode);
+        
+        // 更新账号
+        bool result = service->updateAccount(accountId, "new_username", "new@example.com");
+        EXPECT_TRUE(result);
+        
+        // 验证账号信息已更新
+        auto account = repository->getAccountById(accountId);
+        EXPECT_EQ(account->getUsername(), "new_username");
+        EXPECT_EQ(account->getEmail(), "new@example.com");
+        // 验证邮箱更改后账号被重置为未激活状态
+        EXPECT_FALSE(account->isActive());
+        
+        // 验证新的验证邮件已发送
+        EXPECT_EQ(emailService->lastSentEmail, "new@example.com");
+        EXPECT_FALSE(emailService->lastVerificationCode.empty());
+    }
 
 TEST_F(AccountSystemTest, ChangePassword) {
     std::string accountId = service->createAccount("test_user", "Pass123!", "test@example.com");
@@ -153,4 +158,4 @@ TEST_F(AccountSystemTest, DeleteAccount) {
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
-}    
+}

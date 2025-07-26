@@ -6,7 +6,7 @@
 #include <stdexcept>
 #include <algorithm>
 #include <random>
-#include "util/log.h"
+#include "../util/log.h"
 using namespace util;
 #include <chrono>
 #include <nlohmann/json.hpp>

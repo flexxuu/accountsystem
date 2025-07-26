@@ -2,7 +2,6 @@
 #define POCO_HTTP_CLIENT_H
 
 #include <Poco/Net/PrivateKeyPassphraseHandler.h>
-#include "http_client.h"
 #include <Poco/Net/HTTPClientSession.h>
 #include <Poco/Net/HTTPRequest.h>
 #include <Poco/Net/HTTPResponse.h>
@@ -10,6 +9,7 @@
 #include <Poco/Util/Application.h>
 #include <string>
 #include <map>
+#include "http_client.h"
 
 class PocoHttpClient : public HttpClient {
 public:

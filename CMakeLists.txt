@@ -43,26 +43,28 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 # 配置Poco库查找路径 - 优先使用本地编译版本
 # 根目录控制依赖位置，确保所有子项目使用相同版本依赖
-list(APPEND CMAKE_PREFIX_PATH "${PROJECT_SOURCE_DIR}/thirdlib/poco-poco-1.14.2-release/build")
-set(Poco_DIR "${PROJECT_SOURCE_DIR}/thirdlib/poco-poco-1.14.2-release/build" CACHE PATH "Poco库路径" FORCE)
+list(APPEND CMAKE_PREFIX_PATH "${PROJECT_SOURCE_DIR}/lib")
+set(Poco_DIR "${PROJECT_SOURCE_DIR}/lib" CACHE PATH "Poco库路径" FORCE)
 
 # 查找核心依赖库 - 根目录统一查找，子目录直接使用
 find_package(spdlog REQUIRED)           # 日志库
 find_package(nlohmann_json 3.2.0 REQUIRED) # JSON库
 find_package(fmt REQUIRED)              # 格式化库
+find_package(OpenSSL REQUIRED)          # OpenSSL
 
 # 查找本地编译的Poco库（关键依赖）
 # 使用NO_*选项确保只使用项目内编译的版本，不依赖系统库
+set(Poco_DIR "${PROJECT_SOURCE_DIR}/lib/cmake/Poco/")
 find_package(Poco REQUIRED COMPONENTS Net NetSSL JSON Util Foundation Crypto
-#    PATHS "${PROJECT_SOURCE_DIR}/thirdlib/poco-poco-1.14.2-release/build"
     PATHS "${PROJECT_SOURCE_DIR}/lib"
-    NO_DEFAULT_PATH        # 不使用默认搜索路径
-    NO_CMAKE_PATH          # 不搜索CMAKE_PREFIX_PATH
-    NO_CMAKE_ENVIRONMENT_PATH # 忽略环境变量
-    NO_SYSTEM_ENVIRONMENT_PATH # 忽略系统环境变量
-    NO_CMAKE_PACKAGE_REGISTRY # 不使用CMake包注册表
-    NO_CMAKE_BUILDS_PATH   # 不搜索其他构建目录
-    NO_CMAKE_SYSTEM_PATH)  # 不使用系统路径
+#    NO_DEFAULT_PATH        # 不使用默认搜索路径
+#    NO_CMAKE_PATH          # 不搜索CMAKE_PREFIX_PATH
+#    NO_CMAKE_ENVIRONMENT_PATH # 忽略环境变量
+#    NO_SYSTEM_ENVIRONMENT_PATH # 忽略系统环境变量
+#    NO_CMAKE_PACKAGE_REGISTRY # 不使用CMake包注册表
+#    NO_CMAKE_BUILDS_PATH   # 不搜索其他构建目录
+#    NO_CMAKE_SYSTEM_PATH   # 不使用系统路径
+)
 
 # 配置Poco库链接 - 根目录设置后所有子目录共享
 # link_directories("${PROJECT_SOURCE_DIR}/thirdlib/poco-poco-1.14.2-release/build/lib")
@@ -92,8 +94,8 @@ add_subdirectory(thirdlib/jwt-cpp)
 # 根目录与src关系：提供依赖和配置，src实现具体功能
 add_subdirectory(src)
 
-# 测试目录（当前禁用）
-# add_subdirectory(test)
+# 测试目录
+add_subdirectory(test)
 
 # 配置RPATH - 确保运行时能找到本地编译的库
 # 解决动态链接库路径问题，根目录统一设置避免子目录重复工作

@@ -21,8 +21,8 @@
     "GOOGLE": {
       "clientId": "your-client-id",
       "clientSecret": "your-client-secret",
-      "authUrl": "https://oauth-provider.com/auth",
-      "tokenUrl": "https://oauth-provider.com/token",
+      "authUrl": "https://accounts.google.com/o/oauth2/v2/auth",
+      "tokenUrl": "https://oauth2.googleapis.com/token",
       "redirectUri": "http://localhost:8080/callback",
       "scope": "openid profile email",
       "grantType": "authorization_code",

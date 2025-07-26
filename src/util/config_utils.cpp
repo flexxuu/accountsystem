@@ -56,9 +56,8 @@ bool ConfigUtils::load(const std::string& file_path) {
             auto& providers = j["oauth2_providers"];
             for (auto& [key, value] : providers.items()) {
                 OAuth2Provider provider;
-                if (key == "google") provider = OAuth2Provider::GOOGLE;
-                else if (key == "facebook") provider = OAuth2Provider::FACEBOOK;
-                else if (key == "github") provider = OAuth2Provider::GITHUB;
+                if (key == "GITHUB") provider = OAuth2Provider::GITHUB;
+                else if (key == "CUSTOM") provider = OAuth2Provider::CUSTOM;
                 else continue;
 
                 OAuth2Config cfg;

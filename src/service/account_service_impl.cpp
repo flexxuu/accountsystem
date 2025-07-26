@@ -3,7 +3,7 @@
 #include <jwt-cpp/traits/nlohmann-json/traits.h>
 #include <regex>
 using json_traits = jwt::traits::nlohmann_json;
-#include "util/log.h"
+#include "../util/log.h"
 using namespace util;
 #include "util/security_utils.h"
 #include <nlohmann/json.hpp>
@@ -14,8 +14,9 @@ using namespace util;
 
 AccountServiceImpl::AccountServiceImpl(std::shared_ptr<AccountRepository> repository, 
                                       std::shared_ptr<EmailService> emailService,
-                                      const std::string& jwtSecret)
-    : repository(repository), emailService(emailService), jwtSecret(jwtSecret) {
+                                      std::shared_ptr<ConfigService> configService)
+    : repository(repository), emailService(emailService), configService(configService),
+      jwtSecret(configService->getString("jwt.secret")) {
     Log::info("AccountServiceImpl初始化");
 }
 

@@ -1,8 +1,9 @@
 #include "http_client_factory.h"
+#include "poco_http_client_factory.h"
 #include "poco_http_client.h"
 
 std::unique_ptr<HttpClientFactory> HttpClientFactory::createDefaultFactory() {
-    return std::make_unique<HttpClientFactory>();
+    return std::make_unique<PocoHttpClientFactory>();
 }
 
 std::unique_ptr<HttpClient> HttpClientFactory::createClient() {

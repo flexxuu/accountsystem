@@ -30,8 +30,11 @@ set(SOURCES
     service/account_service_impl.cpp
     service/oauth2_service_impl.cpp
     service/smtp_email_service.cpp
+    service/json_config_service.cpp
+    service/service_registry.cpp
     util/config_utils.cpp
     util/http_client.cpp
+    util/poco_http_client_factory.cpp
     util/log.cpp
     util/security_utils.cpp
     util/poco_http_client.cpp
@@ -46,7 +49,7 @@ list(REMOVE_ITEM SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/main.cpp")
 # 包含头文件目录
 #  ../include: 根目录下的公共头文件
 #  ${CMAKE_CURRENT_SOURCE_DIR}: 当前目录的源文件头文件
-include_directories(${CMAKE_SOURCE_DIR}/include)
+include_directories(${CMAKE_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR})
 
 # 创建静态库 - 子目录核心产物之一
 # account_system_lib: 包含所有业务逻辑，供可执行文件链接
@@ -55,7 +58,7 @@ add_library(account_system_lib STATIC ${SOURCES})
 target_include_directories(account_system_lib
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}  # 库内部头文件
-        ../include                   # 根目录公共头文件
+        ${CMAKE_CURRENT_SOURCE_DIR}/../include                   # 根目录公共头文件
 )
 
 # 打印JWT头文件路径 - 调试信息
@@ -86,6 +89,9 @@ target_link_libraries(account_system_lib
         jwt-cpp::jwt-cpp
         nlohmann_json::nlohmann_json
         fmt::fmt
+        # OpenSSL
+        OpenSSL::SSL
+        OpenSSL::Crypto
 )
 
 # ==============================================================================
@@ -95,9 +101,15 @@ target_link_libraries(account_system_lib
 # 创建主可执行文件
 add_executable(account_system_server main.cpp)
 
+target_link_libraries(account_system_server PRIVATE account_system_lib)
+target_include_directories(account_system_server
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}                             # 库内部头文件
+        ${CMAKE_CURRENT_SOURCE_DIR}../include                   # 根目录公共头文件
+)
+
 # 链接静态库 - 可执行文件仅依赖本地库，不直接链接第三方库
 # 这种设计确保依赖传递的清晰性
-
 target_link_libraries(account_system_server
     PRIVATE
         account_system_lib  # 链接本目录生成的静态库
