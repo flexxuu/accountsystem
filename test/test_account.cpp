@@ -3,7 +3,7 @@
 
 TEST(AccountTest, CreateAccount) {
     // 修复参数顺序：验证代码和激活状态位置纠正
-    Account account("test_user", "password123", "test@example.com", "123456", true, std::chrono::system_clock::now());
+    Account account("123456", "test_user", "password123", "test_salt", "test@example.com", true, std::chrono::system_clock::now());
     EXPECT_EQ(account.getUsername(), "test_user");
 }
 

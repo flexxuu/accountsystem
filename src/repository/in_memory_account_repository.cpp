@@ -38,6 +38,7 @@ std::string InMemoryAccountRepository::createAccount(const Account& account) {
         account.getId(),
         account.getUsername(),
         account.getPasswordHash(),
+        account.getSalt(),
         account.getEmail(),
         account.isActive(),
         account.getCreatedAt()
@@ -180,7 +181,7 @@ std::string InMemoryAccountRepository::createVerificationCode(const std::string&
         now + std::chrono::minutes(15) // 15分钟有效期
     };
     
-    verificationCodes[email] = verificationCode;
+    verificationCodes[std::make_pair(email, type)] = verificationCode;
     
     return code;
 }
@@ -249,7 +250,7 @@ std::string InMemoryAccountRepository::generateRandomCode(int length) {
 
 bool InMemoryAccountRepository::verifyCode(const std::string& email, const std::string& code, VerificationCodeType type) {
     std::lock_guard<std::mutex> lock(mutex);
-    auto it = verificationCodes.find(email);
+    auto it = verificationCodes.find(std::make_pair(email, type));
     if (it == verificationCodes.end()) return false;
 
     auto& codeEntry = it->second;

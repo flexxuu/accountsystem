@@ -8,12 +8,14 @@ Account::Account(
     const std::string& id,
     const std::string& username,
     const std::string& passwordHash,
+    const std::string& salt,
     const std::string& email,
     bool active,
     std::chrono::system_clock::time_point createdAt
 ) : id(id),
     username(username),
     passwordHash(passwordHash),
+    salt(salt),
     email(email),
     active(active),
     createdAt(createdAt) {}
@@ -22,6 +24,7 @@ Account::Account(
 std::string Account::getId() const { return id; }
 std::string Account::getUsername() const { return username; }
 std::string Account::getPasswordHash() const { return passwordHash; }
+std::string Account::getSalt() const { return salt; }
 std::string Account::getEmail() const { return email; }
 bool Account::isActive() const { return active; }
 std::chrono::system_clock::time_point Account::getCreatedAt() const { return createdAt; }
@@ -29,5 +32,6 @@ std::chrono::system_clock::time_point Account::getCreatedAt() const { return cre
 // Setters
 void Account::setUsername(const std::string& username) { this->username = username; }
 void Account::setPasswordHash(const std::string& passwordHash) { this->passwordHash = passwordHash; }
+void Account::setSalt(const std::string& salt) { this->salt = salt; }
 void Account::setEmail(const std::string& email) { this->email = email; }
-void Account::setActive(bool active) { this->active = active; }    
+void Account::setActive(bool active) { this->active = active; }

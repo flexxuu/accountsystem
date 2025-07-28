@@ -12,8 +12,7 @@
 class AccountService {
 public:
     virtual ~AccountService() = default;
-    
-    // 账号管理
+    // 账号注册
     virtual std::string createAccount(const std::string& username, const std::string& password, 
                                      const std::string& email) = 0;
     virtual bool verifyEmail(const std::string& email, const std::string& code) = 0;

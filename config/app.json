@@ -3,7 +3,8 @@
     "port": 8080
   },
   "jwt": {
-    "secret": "your-strong-jwt-secret"
+    "secret": "your-strong-jwt-secret",
+    "expiration_hours": "24"
   },
   "smtp": {
     "server": "smtp.example.com",
@@ -17,7 +18,7 @@
     "max_size": 10485760,
     "max_files": 5
   },
-  "oauth2_providers": {
+  "oauth2": {
     "GOOGLE": {
       "clientId": "your-client-id",
       "clientSecret": "your-client-secret",

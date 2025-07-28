@@ -14,7 +14,7 @@ class AccountSystemTest : public ::testing::Test {
 protected:
     void SetUp() override {
         // 初始化配置服务
-        configService = std::make_shared<JsonConfigService>("../config/app.json");
+        configService = std::make_shared<JsonConfigService>("/home/luc/account-system-cpp/config/app.json");
         repository = std::make_shared<InMemoryAccountRepository>();
         repository->initialize();
         
@@ -71,6 +71,7 @@ TEST_F(AccountSystemTest, VerifyEmail) {
     std::string verificationCode = emailService->lastVerificationCode;
     
     // 验证邮箱
+    // 确保使用正确的验证类型
     bool result = service->verifyEmail("test@example.com", verificationCode);
     EXPECT_TRUE(result);
     
@@ -132,7 +133,7 @@ TEST_F(AccountSystemTest, ChangePassword) {
     EXPECT_TRUE(result);
     
     // 验证旧密码不再有效
-    EXPECT_THROW(service->login("test_user", "Pass123!"), std::invalid_argument);
+    EXPECT_THROW(service->login("test_user", "Pass123!"), AccountException);
     
     // 验证新密码有效
     std::string token = service->login("test_user", "NewPass456!");

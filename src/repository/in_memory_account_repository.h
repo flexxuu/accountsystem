@@ -9,8 +9,16 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "account_repository.h"
 #include <unordered_map>
 #include <mutex>
+#include <map>
+#include <utility>
+
+
+#include <chrono>
+
+
 #include <chrono>
 
 struct VerificationCode {
@@ -52,7 +60,7 @@ private:
     std::unordered_map<std::string, std::shared_ptr<Account>> accountsById;
     std::unordered_map<std::string, std::shared_ptr<Account>> accountsByUsername;
     std::unordered_map<std::string, std::shared_ptr<Account>> accountsByEmail;
-    std::unordered_map<std::string, VerificationCode> verificationCodes;
+    std::map<std::pair<std::string, VerificationCodeType>, VerificationCode> verificationCodes;
     std::unordered_map<std::string, AuthToken> authTokens;
     std::mutex mutex;
     
